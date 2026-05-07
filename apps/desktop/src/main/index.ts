@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { app, dialog, Menu, shell, type MenuItemConstructorOptions } from "electron";
+import { BrowserWindow, Menu, app, dialog, shell, type MenuItemConstructorOptions } from "electron";
 
 import {
   APP_KEYS,
@@ -19,11 +19,15 @@ import {
   type SidecarStamp,
   type WebStatusSnapshot,
 } from "@open-design/sidecar-proto";
+import { dirname, join } from "node:path";
+
 import {
   bootstrapSidecarRuntime,
   createJsonIpcServer,
   requestJsonIpc,
   resolveAppIpcPath,
+  resolveLogFilePath,
+  resolveNamespaceRoot,
   type JsonIpcServerHandle,
   type SidecarRuntimeContext,
 } from "@open-design/sidecar";
@@ -32,6 +36,10 @@ import { readProcessStamp } from "@open-design/platform";
 import { createDesktopRuntime } from "./runtime.js";
 import { attachDesktopProcessErrorFilter } from "./uncaught-exception.js";
 import { createDesktopUpdater, type DesktopUpdater } from "./updater.js";
+import {
+  exportDiagnosticsToFile,
+  registerDesktopDiagnosticsIpc,
+} from "./diagnostics.js";
 
 // Re-export pure URL-policy helpers so the packaged workspace's
 // vitest can pin their behaviour without spinning up a full Electron
@@ -185,7 +193,16 @@ async function showUpdateResultDialog(updater: DesktopUpdater, status = updater.
   }
 }
 
-function installDesktopMenu(updater: DesktopUpdater): () => void {
+function installDesktopMenu(
+  updater: DesktopUpdater,
+  runtime: SidecarRuntimeContext<SidecarStamp>,
+): () => void {
+  const exportDiagnostics = () => {
+    const focused = BrowserWindow.getFocusedWindow();
+    void exportDiagnosticsToFile(runtime, focused).catch((error: unknown) => {
+      console.error("desktop diagnostics export from menu failed", error);
+    });
+  };
   const rebuild = () => {
     const updateItems = buildUpdateMenuItems(updater);
     const template: MenuItemConstructorOptions[] = [
@@ -263,6 +280,8 @@ function installDesktopMenu(updater: DesktopUpdater): () => void {
               void shell.openExternal("https://github.com/nexu-io/open-design");
             },
           },
+          { type: "separator" },
+          { label: "Export Diagnostics…", click: exportDiagnostics },
         ],
       },
     ];
@@ -375,6 +394,18 @@ export async function runDesktopMain(
     );
   }
 
+  const namespaceRoot = resolveNamespaceRoot({
+    base: runtime.base,
+    contract: OPEN_DESIGN_SIDECAR_CONTRACT,
+    namespace: runtime.namespace,
+  });
+  const desktopLogPath = resolveLogFilePath({
+    app: APP_KEYS.DESKTOP,
+    contract: OPEN_DESIGN_SIDECAR_CONTRACT,
+    runtimeRoot: namespaceRoot,
+  });
+  const rendererLogPath = join(dirname(desktopLogPath), "renderer.log");
+
   const desktop = await createDesktopRuntime({
     desktopAuthSecret,
     discoverUrl: options.discoverWebUrl ?? createWebDiscovery(runtime),
@@ -386,6 +417,7 @@ export async function runDesktopMain(
     // runtime then mints a FRESH token (new nonce + new exp — replay
     // protection still works) and POSTs once more.
     registerDesktopAuthWithDaemon: () => registerDesktopAuthWithDaemon(runtime, desktopAuthSecret),
+    rendererLogPath,
   });
   const updater = createDesktopUpdater(
     {
@@ -396,8 +428,9 @@ export async function runDesktopMain(
     },
     { openPath: (path) => shell.openPath(path) },
   );
-  const disposeMenu = installDesktopMenu(updater);
+  const disposeMenu = installDesktopMenu(updater, runtime);
   scheduleStartupUpdateCheck(updater);
+  const removeDiagnosticsIpc = registerDesktopDiagnosticsIpc(runtime);
   let ipcServer: JsonIpcServerHandle | null = null;
   let shuttingDown = false;
 
@@ -408,6 +441,7 @@ export async function runDesktopMain(
       console.error("desktop beforeShutdown failed", error);
     });
     disposeMenu();
+    removeDiagnosticsIpc();
     await ipcServer?.close().catch(() => undefined);
     await desktop.close().catch(() => undefined);
     app.quit();

@@ -2108,4 +2108,12 @@ export interface Dict {
   'critiqueTheater.settingsEnabledDescription': string;
   'critiqueTheater.settingsEnabledProjectHint': string;
   'critiqueTheater.settingsEnabledNoProjectHint': string;
+
+  // Diagnostics export
+  'diagnostics.exportTitle': string;
+  'diagnostics.exportButton': string;
+  'diagnostics.exportHint': string;
+  'diagnostics.exporting': string;
+  'diagnostics.exportSuccess': string;
+  'diagnostics.exportFailed': string;
 }
