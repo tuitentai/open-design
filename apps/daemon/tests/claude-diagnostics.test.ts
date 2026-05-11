@@ -89,4 +89,19 @@ describe('diagnoseClaudeCliFailure', () => {
     expect(diagnostic?.detail).not.toContain('abcdef0123456789ABCDEF');
     expect(diagnostic?.detail).toContain('[REDACTED:bearer_token]');
   });
+
+  it('redacts provider header and query API keys from returned details', () => {
+    const diagnostic = diagnoseClaudeCliFailure({
+      agentId: 'claude',
+      exitCode: 1,
+      stderrTail:
+        '401 x-api-key: header-secret-123 url=https://proxy.example.test/v1?key=query-secret-456',
+      env: { ANTHROPIC_BASE_URL: 'https://proxy.example.test' },
+    });
+
+    expect(diagnostic?.detail).not.toContain('header-secret-123');
+    expect(diagnostic?.detail).not.toContain('query-secret-456');
+    expect(diagnostic?.detail).toContain('x-api-key: [REDACTED:api_key_header]');
+    expect(diagnostic?.detail).toContain('?key=[REDACTED:api_key_query]');
+  });
 });
