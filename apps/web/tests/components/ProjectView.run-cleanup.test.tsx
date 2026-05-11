@@ -207,6 +207,7 @@ describe('ProjectView daemon cleanup', () => {
         config={{ mode: 'daemon', agentId: 'agent-1', notifications: undefined, agentModels: {} } as never}
         agents={[{ id: 'agent-1', name: 'OpenCode', models: [] } as never]}
         skills={[]}
+        designTemplates={[]}
         designSystems={[]}
         daemonLive
         onModeChange={() => {}}
@@ -275,6 +276,7 @@ describe('ProjectView daemon cleanup', () => {
         config={{ mode: 'daemon', agentId: 'agent-1', notifications: undefined, agentModels: {} } as never}
         agents={[{ id: 'agent-1', name: 'OpenCode', models: [] } as never]}
         skills={[]}
+        designTemplates={[]}
         designSystems={[]}
         daemonLive
         onModeChange={() => {}}
