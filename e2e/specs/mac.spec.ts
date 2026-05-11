@@ -632,6 +632,129 @@ desktopMacDescribe('mac desktop settings smoke', () => {
     });
   }, 45_000);
 
+  test('clicking the Orbit Open artifact link keeps the desktop settings dialog stable', async () => {
+    await seedDesktopConfig(desktop, {
+      mode: 'api',
+      apiKey: 'sk-test',
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-4o',
+      apiProtocol: 'openai',
+      apiProviderBaseUrl: 'https://api.openai.com/v1',
+      agentId: null,
+      skillId: null,
+      designSystemId: null,
+      composio: { apiKeyConfigured: true },
+      orbit: {
+        enabled: false,
+        time: '09:00',
+        templateSkillId: 'orbit-general',
+      },
+      onboardingCompleted: true,
+      mediaProviders: {},
+      agentModels: {},
+      theme: 'system',
+    }, 'model');
+
+    await desktop.eval(`
+      (() => {
+        const originalFetch = window.fetch.bind(window);
+        window.fetch = async (input, init) => {
+          const url = typeof input === 'string'
+            ? input
+            : input instanceof Request
+              ? input.url
+              : String(input);
+          if (url === '/api/orbit/status') {
+            return new Response(JSON.stringify({
+              running: false,
+              nextRunAt: null,
+              lastRun: {
+                completedAt: '2026-05-06T10:00:00.000Z',
+                trigger: 'manual',
+                templateSkillId: 'orbit-general',
+                connectorsChecked: 5,
+                connectorsSucceeded: 3,
+                connectorsSkipped: 2,
+                connectorsFailed: 0,
+                markdown: 'General latest summary',
+                artifactId: 'artifact-123',
+                artifactProjectId: 'project-456',
+              },
+              lastRunsByTemplate: {
+                'orbit-general': {
+                  completedAt: '2026-05-06T10:00:00.000Z',
+                  trigger: 'manual',
+                  templateSkillId: 'orbit-general',
+                  connectorsChecked: 5,
+                  connectorsSucceeded: 3,
+                  connectorsSkipped: 2,
+                  connectorsFailed: 0,
+                  markdown: 'General latest summary',
+                  artifactId: 'artifact-123',
+                  artifactProjectId: 'project-456',
+                },
+              },
+            }), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            });
+          }
+          return originalFetch(input, init);
+        };
+        window.__odLastOpenArtifactHref = null;
+        window.__odOpenArtifactClickCount = 0;
+        if (!window.__odOpenArtifactClickCaptureInstalled) {
+          document.addEventListener('click', (event) => {
+            const target = event.target instanceof Element ? event.target.closest('a') : null;
+            if (!(target instanceof HTMLAnchorElement)) return;
+            if (target.textContent?.trim() !== 'Open artifact') return;
+            window.__odLastOpenArtifactHref = target.getAttribute('href');
+            window.__odOpenArtifactClickCount += 1;
+            event.preventDefault();
+          }, true);
+          window.__odOpenArtifactClickCaptureInstalled = true;
+        }
+        return true;
+      })()
+    `);
+
+    await desktop.openSettings();
+    await openDesktopSettingsSection(desktop, 'Orbit');
+
+    await waitFor(async () => {
+      const snapshot = await readDesktopOrbitSnapshot(desktop);
+      expect(snapshot.openArtifactHref).toBe('/api/live-artifacts/artifact-123/preview?projectId=project-456');
+    });
+
+    const clicked = await desktop.eval<boolean>(`
+      (() => {
+        const link = Array.from(document.querySelectorAll('a'))
+          .find((node) => node.textContent?.trim() === 'Open artifact');
+        if (!(link instanceof HTMLAnchorElement)) return false;
+        link.click();
+        return true;
+      })()
+    `);
+    expect(clicked).toBe(true);
+
+    await waitFor(async () => {
+      const snapshot = await readDesktopOrbitSnapshot(desktop);
+      expect(snapshot.dialogOpen).toBe(true);
+      expect(snapshot.heading).toBe('Orbit');
+      expect(snapshot.sectionTitle).toBe('Orbit');
+      expect(snapshot.openArtifactHref).toBe('/api/live-artifacts/artifact-123/preview?projectId=project-456');
+    });
+
+    const clickCapture = await desktop.eval<{ count: number; href: string | null }>(`
+      (() => ({
+        count: typeof window.__odOpenArtifactClickCount === 'number' ? window.__odOpenArtifactClickCount : 0,
+        href: typeof window.__odLastOpenArtifactHref === 'string' ? window.__odLastOpenArtifactHref : null,
+      }))()
+    `);
+    expect(clickCapture.count).toBeGreaterThan(0);
+    expect(clickCapture.href).toBe('/api/live-artifacts/artifact-123/preview?projectId=project-456');
+  }, 45_000);
+
   test('routes the Orbit gate CTA to the Connectors section inside the desktop shell', async () => {
     await seedDesktopConfig(desktop, {
       mode: 'api',
