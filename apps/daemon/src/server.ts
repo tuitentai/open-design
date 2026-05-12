@@ -4078,12 +4078,20 @@ export async function startServer({
       'tool_result',
       'artifact',
     ]);
+    const appendAgentVisibleText = (chunk) => {
+      if (typeof chunk === 'string') {
+        agentVisibleText += chunk;
+      }
+    };
+    const appendAgentVisibleTextFromEvent = (ev) => {
+      if (ev?.type === 'text_delta') {
+        appendAgentVisibleText(ev.delta);
+      }
+    };
     const forwardAgentEvent = (ev) => {
       lastAgentEventPhase = summarizeAgentEventForInactivity(ev);
       noteAgentActivity();
-      if (ev?.type === 'text_delta' && typeof ev.delta === 'string') {
-        agentVisibleText += ev.delta;
-      }
+      appendAgentVisibleTextFromEvent(ev);
       send('agent', ev);
     };
     const sendAgentEvent = (ev) => {
@@ -4167,6 +4175,9 @@ export async function startServer({
         mcpServers,
         send: (event, data) => {
           noteAgentActivity();
+          if (event === 'agent') {
+            appendAgentVisibleTextFromEvent(data);
+          }
           send(event, data);
         },
       });
@@ -4186,6 +4197,7 @@ export async function startServer({
     } else {
       child.stdout.on('data', (chunk) => {
         noteAgentActivity();
+        appendAgentVisibleText(String(chunk));
         send('stdout', { chunk });
       });
     }
