@@ -61,6 +61,7 @@ import {
 import { attachAcpSession } from './acp.js';
 import { attachPiRpcSession } from './pi-rpc.js';
 import { createClaudeStreamHandler } from './claude-stream.js';
+import { diagnoseClaudeCliFailure } from './claude-diagnostics.js';
 import { loadCritiqueConfigFromEnv } from './critique/config.js';
 import { reconcileStaleRuns } from './critique/persistence.js';
 import { runOrchestrator } from './critique/orchestrator.js';
@@ -3611,6 +3612,26 @@ export async function startServer({
     const inactivityTimeoutMs = resolveChatRunInactivityTimeoutMs();
     const inactivityKillGraceMs = 3_000;
     let inactivityTimer = null;
+    let childStdoutSeen = false;
+    let lastAgentEventPhase = 'spawn pending';
+    let lastToolResultChars = 0;
+    const summarizeAgentEventForInactivity = (payload) => {
+      const type = payload?.type ? String(payload.type) : 'unknown';
+      if (type === 'tool_result') {
+        const content = typeof payload.content === 'string' ? payload.content : '';
+        lastToolResultChars = Math.max(lastToolResultChars, content.length);
+        return `tool_result:${content.length} chars`;
+      }
+      if (type === 'tool_use') {
+        const name = payload?.name ? String(payload.name) : 'unknown';
+        return `tool_use:${name}`;
+      }
+      if (type === 'text_delta' || type === 'thinking_delta') {
+        const text = typeof payload.text === 'string' ? payload.text : '';
+        return `${type}:${text.length} chars`;
+      }
+      return type;
+    };
     const clearInactivityWatchdog = () => {
       if (inactivityTimer) {
         clearTimeout(inactivityTimer);
@@ -3630,7 +3651,10 @@ export async function startServer({
       if (run.cancelRequested || design.runs.isTerminal(run.status)) return;
       const message =
         `Agent stalled without emitting any new output for ${Math.round(inactivityTimeoutMs / 1000)}s. ` +
-        'The model or CLI likely hung while generating. Retry the turn or pick a different model.';
+        'The model or CLI likely hung while generating. ' +
+        `Phase details: spawned agent binary ${resolvedBin}; stdout arrived: ${childStdoutSeen ? 'yes' : 'no'}; ` +
+        `last agent event: ${lastAgentEventPhase}; largest tool result observed: ${lastToolResultChars} chars. ` +
+        'Retry the turn, pick a different model, or start a new conversation if the prior context is very large.';
       clearInactivityWatchdog();
       send('error', createSseErrorPayload('AGENT_EXECUTION_FAILED', message, { retryable: true }));
       design.runs.finish(run, 'failed', 1, null);
@@ -3650,9 +3674,11 @@ export async function startServer({
       activeChatAgentEventSinks.delete(toolTokenGrant?.runId ?? runId);
     };
     if (toolTokenGrant?.runId) {
-      activeChatAgentEventSinks.set(toolTokenGrant.runId, (payload) =>
-        (noteAgentActivity(), send('agent', payload)),
-      );
+      activeChatAgentEventSinks.set(toolTokenGrant.runId, (payload) => {
+        lastAgentEventPhase = summarizeAgentEventForInactivity(payload);
+        noteAgentActivity();
+        send('agent', payload);
+      });
     }
     // If detection can't find the binary, surface a friendly SSE error
     // pointing at /api/agents instead of silently falling back to
@@ -3704,6 +3730,9 @@ export async function startServer({
     let child;
     let acpSession = null;
     let writePromptToChildStdin = false;
+    let spawnedAgentEnv = null;
+    let agentStdoutTail = '';
+    let agentStderrTail = '';
     try {
       // Prompt delivery via stdin is now the universal default. This bypasses
       // both the cmd.exe 8KB limit and the CreateProcess 32KB limit.
@@ -3722,6 +3751,7 @@ export async function startServer({
         ),
         ...odMediaEnv,
       };
+      spawnedAgentEnv = env;
       const invocation = createCommandInvocation({
         command: resolvedBin,
         args,
@@ -3771,7 +3801,13 @@ export async function startServer({
     // structured adapters that buffer partial lines (Codex item.completed,
     // pi-rpc session/prompt, ACP agent messages) and models that spend a
     // long time in non-streamed reasoning still keep the run alive.
-    child.stdout.on('data', () => noteAgentActivity());
+    child.stdout.on('data', (chunk) => {
+      childStdoutSeen = true;
+      noteAgentActivity();
+      if (def.id === 'claude') {
+        agentStdoutTail = `${agentStdoutTail}${chunk}`.slice(-1000);
+      }
+    });
 
     // ---- Memory: assistant-reply buffer for LLM extraction --------------
     // Capture up to 32 KiB of raw stdout. The LLM extractor (fired in the
@@ -3961,6 +3997,7 @@ export async function startServer({
         }));
         return;
       }
+      lastAgentEventPhase = summarizeAgentEventForInactivity(ev);
       noteAgentActivity();
       if (ev?.type && SUBSTANTIVE_AGENT_EVENT_TYPES.has(ev.type)) {
         agentProducedOutput = true;
@@ -3970,6 +4007,7 @@ export async function startServer({
 
     if (def.streamFormat === 'claude-stream-json') {
       const claude = createClaudeStreamHandler((ev) => {
+        lastAgentEventPhase = summarizeAgentEventForInactivity(ev);
         noteAgentActivity();
         send('agent', ev);
       });
@@ -3982,6 +4020,7 @@ export async function startServer({
       child.on('close', () => qoder.flush());
     } else if (def.streamFormat === 'copilot-stream-json') {
       const copilot = createCopilotStreamHandler((ev) => {
+        lastAgentEventPhase = summarizeAgentEventForInactivity(ev);
         noteAgentActivity();
         send('agent', ev);
       });
@@ -4065,6 +4104,9 @@ export async function startServer({
     run.acpSession = acpSession;
     child.stderr.on('data', (chunk) => {
       noteAgentActivity();
+      if (def.id === 'claude') {
+        agentStderrTail = `${agentStderrTail}${chunk}`.slice(-1000);
+      }
       send('stderr', { chunk });
     });
 
@@ -4112,6 +4154,23 @@ export async function startServer({
         : code === 0
           ? 'succeeded'
           : 'failed';
+      if (status === 'failed') {
+        const diagnostic = diagnoseClaudeCliFailure({
+          agentId: def.id,
+          exitCode: code,
+          signal,
+          stderrTail: agentStderrTail,
+          stdoutTail: agentStdoutTail,
+          env: spawnedAgentEnv,
+        });
+        if (diagnostic) {
+          send('error', createSseErrorPayload(
+            'AGENT_EXECUTION_FAILED',
+            diagnostic.message,
+            { retryable: diagnostic.retryable, details: { detail: diagnostic.detail } },
+          ));
+        }
+      }
       design.runs.finish(run, status, code, signal);
     });
     if (writePromptToChildStdin && child.stdin) {

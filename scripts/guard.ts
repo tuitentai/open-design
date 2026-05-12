@@ -1,6 +1,15 @@
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
+import {
+  checkDesignSystemA1RequiredTokens,
+  checkDesignSystemA2DefaultsParity,
+  checkDesignSystemA2RequiredTokens,
+  checkDesignSystemBSlotRequiredTokens,
+  checkDesignSystemTokenFixtureSync,
+  checkDesignSystemUnknownTokens,
+} from "./check-tokens-fixture-sync.ts";
+
 const repoRoot = path.resolve(import.meta.dirname, "..");
 const allowedE2eScripts = new Set([
   "e2e/scripts/playwright.ts",
@@ -59,6 +68,8 @@ const residualAllowedExactPaths = new Set([
   "tools/dev/esbuild.config.mjs",
   "tools/pack/bin/tools-pack.mjs",
   "tools/pack/esbuild.config.mjs",
+  "tools/pr/bin/tools-pr.mjs",
+  "tools/pr/esbuild.config.mjs",
   "tools/pack/resources/mac/notarize.cjs",
   // electron-builder hook path; CJS compatibility entry used by tools-pack desktop builds.
   "tools/pack/resources/web-standalone-after-pack.cjs",
@@ -227,7 +238,12 @@ async function checkTestLayout(): Promise<boolean> {
 
 const e2ePackageJsonPath = path.join(repoRoot, "e2e", "package.json");
 const e2eSkippedDirectories = new Set([".od-data", "node_modules", "reports", "test-results"]);
-const e2eAllowedScripts = ["test", "typecheck"];
+const e2eAllowedScripts = [
+  "test",
+  "test:ui:critical",
+  "test:ui:extended",
+  "typecheck",
+];
 
 async function collectRepositoryFiles(directory: string, skippedDirectoryNames = new Set<string>()): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -360,6 +376,7 @@ const toolsRootAllowlist = new Map<string, "directory" | "file">([
   ["AGENTS.md", "file"],
   ["dev", "directory"],
   ["pack", "directory"],
+  ["pr", "directory"],
 ]);
 
 async function checkToolsLayout(): Promise<boolean> {
@@ -373,7 +390,7 @@ async function checkToolsLayout(): Promise<boolean> {
     const repositoryPath = `tools/${entry.name}${entry.isDirectory() ? "/" : ""}`;
 
     if (expected == null) {
-      violations.push(`${repositoryPath} -> tools/ top-level entries are allowlisted; expected only AGENTS.md, dev/, and pack/`);
+      violations.push(`${repositoryPath} -> tools/ top-level entries are allowlisted; expected only AGENTS.md, dev/, pack/, and pr/`);
       continue;
     }
 
@@ -408,6 +425,12 @@ const checks: GuardCheck[] = [
   { name: "e2e layout", run: checkE2eLayout },
   { name: "web test layout", run: checkWebTestLayout },
   { name: "tools layout", run: checkToolsLayout },
+  { name: "design system token-fixture sync", run: checkDesignSystemTokenFixtureSync },
+  { name: "design system A1 required tokens", run: checkDesignSystemA1RequiredTokens },
+  { name: "design system A2 required tokens", run: checkDesignSystemA2RequiredTokens },
+  { name: "design system B-slot required tokens", run: checkDesignSystemBSlotRequiredTokens },
+  { name: "design system unknown token allowlist", run: checkDesignSystemUnknownTokens },
+  { name: "design system A2 defaults parity", run: checkDesignSystemA2DefaultsParity },
 ];
 
 const results: boolean[] = [];
