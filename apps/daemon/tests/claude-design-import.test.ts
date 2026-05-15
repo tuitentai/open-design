@@ -239,7 +239,11 @@ function DCViewport() {
       expect(written).not.toContain('const isMouseWheel');
       expect(written).not.toContain('(gsBase * e.scale) / tf.current.scale');
       expect(written).toContain('const panByWheel = (e) =>');
-      expect(written).toContain('if (e.metaKey)');
+      // The Cmd-zoom gate accepts ctrlKey too because Chromium/Firefox
+      // synthesize wheel events with `ctrlKey: true` during a trackpad
+      // pinch; without that, smooth pinch would fall through to
+      // `panByWheel(e)` instead of zooming.
+      expect(written).toContain('if (e.ctrlKey || e.metaKey)');
       // The rewritten Cmd-zoom path now keeps both ratios so a physical mouse
       // wheel does not shrink the canvas by ~63% per notch: the notched
       // detector matches deltaMode!==0 or large integer pixel deltas, and the
@@ -291,6 +295,66 @@ function DCViewport() {
       expect(typeof firstCall).toBe('string');
       expect(firstCall).toContain('[claude-design-import]');
       expect(firstCall).toContain('design-canvas.jsx');
+    } finally {
+      warn.mockRestore();
+      rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
+  it('warns when only the gesture-handler regex drifts', async () => {
+    // Real-world drift case: Anthropic ships a fresh wheel-handler block
+    // (so `wheelBlock` still matches and gets normalized) but rewords the
+    // Safari `gesture*` comment so `gestureBlock` misses. Without per-regex
+    // tracking the previous warn() only fired when neither block matched,
+    // which let this half-rewrite ship silently with the old Safari pinch
+    // handlers still active over a normalized wheel path. Verify the warn
+    // still fires and identifies the gesture handler as the missing one.
+    const partialDriftCanvas = `
+function DCViewport() {
+  React.useEffect(() => {
+    // Mouse-wheel vs trackpad-scroll heuristic. Keep this on the host so
+    // an embedded export still routes Cmd+wheel through host zoom.
+    const onWheel = (e) => {
+      e.preventDefault();
+    };
+
+    // (Reworded) Safari trackpad pinch via native gesture* events.
+    let isGesturing = false;
+    const onGestureStart = (e) => { e.preventDefault(); isGesturing = true; };
+    const onGestureChange = (e) => { e.preventDefault(); };
+    const onGestureEnd = (e) => { e.preventDefault(); isGesturing = false; };
+  });
+}
+`;
+    const zip = buildZip([
+      { name: 'index.html', body: Buffer.from('<html><script src="design-canvas.jsx"></script></html>') },
+      { name: 'design-canvas.jsx', body: Buffer.from(partialDriftCanvas) },
+    ]);
+    const tmp = mkdtempSync(path.join(os.tmpdir(), 'cd-import-gesture-drift-'));
+    const zipPath = path.join(tmp, 'in.zip');
+    const projectDir = path.join(tmp, 'proj');
+    writeFileSync(zipPath, zip);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const result = await importClaudeDesignZip(zipPath, projectDir);
+      expect(result.files).toContain('design-canvas.jsx');
+      const written = readFileSync(path.join(projectDir, 'design-canvas.jsx'), 'utf8');
+      // Wheel block still matched, so the new pan/zoom handler is in place.
+      expect(written).toContain('const panByWheel = (e) =>');
+      expect(written).toContain('if (e.ctrlKey || e.metaKey)');
+      // Gesture block missed, so the original (reworded) gesture handlers
+      // are still present verbatim.
+      expect(written).toContain('(Reworded) Safari trackpad pinch');
+      // And the importer logged a warning naming the gesture handler as
+      // the missing one, so future regex tweaks have to confront the drift.
+      expect(warn).toHaveBeenCalled();
+      const warnedLines = warn.mock.calls
+        .map((args) => args[0])
+        .filter((s): s is string => typeof s === 'string');
+      const gestureWarn = warnedLines.find((line) =>
+        line.includes('[claude-design-import]') && line.includes('gesture-handler'),
+      );
+      expect(gestureWarn).toBeDefined();
     } finally {
       warn.mockRestore();
       rmSync(tmp, { recursive: true, force: true });
