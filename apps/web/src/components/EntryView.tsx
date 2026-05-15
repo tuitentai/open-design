@@ -106,7 +106,9 @@ interface Props {
   onDeleteProject: (id: string) => void;
   onRenameProject: (id: string, name: string) => void;
   onChangeDefaultDesignSystem: (id: string) => void;
+  onConfigChange: (config: AppConfig) => Promise<void> | void;
   onPersistComposioKey: (composio: AppConfig['composio']) => Promise<void> | void;
+  onSkillsChange?: (skills: SkillSummary[]) => void;
   onOpenSettings: (section?: 'execution' | 'media' | 'composio' | 'orbit' | 'integrations' | 'mcpClient' | 'language' | 'appearance' | 'notifications' | 'pet' | 'library' | 'about') => void;
 }
 
@@ -257,7 +259,9 @@ export function EntryView({
   onDeleteProject,
   onRenameProject,
   onChangeDefaultDesignSystem,
+  onConfigChange,
   onPersistComposioKey,
+  onSkillsChange,
   onOpenSettings,
 }: Props) {
   const [connectors, setConnectors] = useState<ConnectorDetail[]>([]);
@@ -341,7 +345,9 @@ export function EntryView({
       onOpenLiveArtifact={onOpenLiveArtifact}
       onDeleteProject={onDeleteProject}
       onChangeDefaultDesignSystem={onChangeDefaultDesignSystem}
+      onConfigChange={onConfigChange}
       onPersistComposioKey={onPersistComposioKey}
+      onSkillsChange={onSkillsChange}
       onOpenSettings={onOpenSettings}
     />
   );

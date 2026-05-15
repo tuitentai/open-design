@@ -30,6 +30,7 @@ import {
 interface Props {
   cfg: AppConfig;
   setCfg: Dispatch<SetStateAction<AppConfig>>;
+  onSkillsChange?: (skills: SkillSummary[]) => void;
 }
 
 type SourceFilter = 'all' | 'user' | 'built-in';
@@ -64,7 +65,7 @@ function parseTriggers(raw: string): string[] {
     .filter(Boolean);
 }
 
-export function SkillsSection({ cfg, setCfg }: Props) {
+export function SkillsSection({ cfg, setCfg, onSkillsChange }: Props) {
   const t = useT();
 
   const [skills, setSkills] = useState<SkillSummary[]>([]);
@@ -108,8 +109,9 @@ export function SkillsSection({ cfg, setCfg }: Props) {
   const refresh = useCallback(async () => {
     const list = await fetchSkills();
     setSkills(list);
+    onSkillsChange?.(list);
     return list;
-  }, []);
+  }, [onSkillsChange]);
 
   useEffect(() => {
     void refresh();
@@ -550,23 +552,25 @@ function SkillRow({
           <span className="skills-row-summary">
             <span className="skills-row-summary-line">
               <span className="skills-row-summary-name">{summaryName}</span>
-              <span className="skills-row-summary-mode">{skill.mode}</span>
-              {skill.category ? (
-                <span
-                  className="skills-row-summary-category"
-                  title={`Category: ${humanizeCategory(skill.category)}`}
-                >
-                  {humanizeCategory(skill.category)}
-                </span>
-              ) : null}
-              {skill.source === 'user' ? (
-                <span
-                  className="skills-row-summary-source"
-                  title="User-imported skill"
-                >
-                  user
-                </span>
-              ) : null}
+              <span className="skills-row-summary-meta">
+                <span className="skills-row-summary-mode">{skill.mode}</span>
+                {skill.category ? (
+                  <span
+                    className="skills-row-summary-category"
+                    title={`Category: ${humanizeCategory(skill.category)}`}
+                  >
+                    {humanizeCategory(skill.category)}
+                  </span>
+                ) : null}
+                {skill.source === 'user' ? (
+                  <span
+                    className="skills-row-summary-source"
+                    title="User-imported skill"
+                  >
+                    user
+                  </span>
+                ) : null}
+              </span>
             </span>
             {skill.description ? (
               <span className="skills-row-summary-desc">{skill.description}</span>

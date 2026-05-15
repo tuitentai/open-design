@@ -222,7 +222,9 @@ interface Props {
   onOpenLiveArtifact: (projectId: string, artifactId: string) => void;
   onDeleteProject: (id: string) => void;
   onChangeDefaultDesignSystem: (id: string) => void;
+  onConfigChange: (config: AppConfig) => Promise<void> | void;
   onPersistComposioKey: (composio: AppConfig['composio']) => Promise<void> | void;
+  onSkillsChange?: (skills: SkillSummary[]) => void;
   onOpenSettings: (
     section?:
       | 'execution'
@@ -271,7 +273,9 @@ export function EntryShell({
   onOpenLiveArtifact,
   onDeleteProject,
   onChangeDefaultDesignSystem,
+  onConfigChange,
   onPersistComposioKey,
+  onSkillsChange,
   onOpenSettings,
 }: Props) {
   const t = useT();
@@ -782,7 +786,9 @@ export function EntryShell({
                 config={config}
                 initialTab={integrationTab}
                 composioConfigLoading={composioConfigLoading}
+                onConfigChange={onConfigChange}
                 onPersistComposioKey={onPersistComposioKey}
+                onSkillsChange={onSkillsChange}
               />
             ) : null}
           </div>

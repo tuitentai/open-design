@@ -609,6 +609,10 @@ export function App() {
     [config],
   );
 
+  const handleSkillsChange = useCallback((next: SkillSummary[]) => {
+    setSkills(next);
+  }, []);
+
   const handleModeChange = useCallback(
     (mode: AppConfig['mode']) => {
       const next = { ...config, mode };
@@ -1215,7 +1219,9 @@ export function App() {
         onDeleteProject={handleDeleteProject}
         onRenameProject={handleRenameProject}
         onChangeDefaultDesignSystem={handleChangeDefaultDesignSystem}
+        onConfigChange={handleConfigPersist}
         onPersistComposioKey={handleConfigPersistComposioKey}
+        onSkillsChange={handleSkillsChange}
         onOpenSettings={openSettings}
       />
     );

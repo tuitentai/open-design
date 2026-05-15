@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
-import type { AppConfig } from '../types';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import type { AppConfig, SkillSummary } from '../types';
 import { ConnectorSection } from './SettingsDialog';
 import { Icon } from './Icon';
 import { McpClientSection } from './McpClientSection';
+import { SkillsSection } from './SkillsSection';
 import { UseEverywhereGuidePanel } from './UseEverywhereModal';
 
 export type IntegrationTab = 'mcp' | 'connectors' | 'skills' | 'use-everywhere';
@@ -11,7 +13,9 @@ interface Props {
   config: AppConfig;
   initialTab?: IntegrationTab;
   composioConfigLoading?: boolean;
+  onConfigChange: (next: AppConfig) => Promise<void> | void;
   onPersistComposioKey: (composio: AppConfig['composio']) => Promise<void> | void;
+  onSkillsChange?: (skills: SkillSummary[]) => void;
 }
 
 const INTEGRATION_TABS: ReadonlyArray<{
@@ -32,7 +36,7 @@ const INTEGRATION_TABS: ReadonlyArray<{
   {
     id: 'skills',
     label: 'Skills',
-    hint: 'Coming soon',
+    hint: 'Project skills',
   },
   {
     id: 'use-everywhere',
@@ -45,21 +49,53 @@ export function IntegrationsView({
   config,
   initialTab = 'mcp',
   composioConfigLoading = false,
+  onConfigChange,
   onPersistComposioKey,
+  onSkillsChange,
 }: Props) {
   const [activeTab, setActiveTab] = useState<IntegrationTab>(initialTab);
   const [localConfig, setLocalConfig] = useState<AppConfig>(config);
+  const configRef = useRef<AppConfig>(config);
+  const localConfigRef = useRef<AppConfig>(config);
 
   useEffect(() => {
     setActiveTab(initialTab);
   }, [initialTab]);
 
   useEffect(() => {
+    configRef.current = config;
     setLocalConfig((curr) => ({
       ...curr,
       composio: config.composio,
+      disabledSkills: config.disabledSkills,
     }));
-  }, [config.composio]);
+    localConfigRef.current = {
+      ...localConfigRef.current,
+      composio: config.composio,
+      disabledSkills: config.disabledSkills,
+    };
+  }, [config.composio, config.disabledSkills]);
+
+  useEffect(() => {
+    localConfigRef.current = localConfig;
+  }, [localConfig]);
+
+  const setAndPersistConfig = useCallback<Dispatch<SetStateAction<AppConfig>>>(
+    (action) => {
+      const prev = localConfigRef.current;
+      const next =
+        typeof action === 'function'
+          ? (action as (current: AppConfig) => AppConfig)(prev)
+          : action;
+      localConfigRef.current = next;
+      setLocalConfig(next);
+      void onConfigChange({
+        ...configRef.current,
+        disabledSkills: next.disabledSkills,
+      });
+    },
+    [onConfigChange],
+  );
 
   const liveDaemonUrl =
     typeof window !== 'undefined' ? window.location.origin : undefined;
@@ -119,7 +155,13 @@ export function IntegrationsView({
           />
         ) : null}
 
-        {activeTab === 'skills' ? <SkillsComingSoonPanel /> : null}
+        {activeTab === 'skills' ? (
+          <SkillsSection
+            cfg={localConfig}
+            setCfg={setAndPersistConfig}
+            onSkillsChange={onSkillsChange}
+          />
+        ) : null}
 
         {activeTab === 'use-everywhere' ? (
           <div className="integrations-view__use-everywhere">
@@ -129,25 +171,6 @@ export function IntegrationsView({
             />
           </div>
         ) : null}
-      </div>
-    </section>
-  );
-}
-
-function SkillsComingSoonPanel() {
-  return (
-    <section className="integrations-view__coming-soon" aria-labelledby="integration-skills-title">
-      <div className="integrations-view__coming-icon" aria-hidden="true">
-        <Icon name="sparkles" size={22} />
-      </div>
-      <div>
-        <p className="integrations-view__coming-kicker">Coming soon</p>
-        <h2 id="integration-skills-title">Skills integrations</h2>
-        <p>
-          Skill-level integration management is being carried over from another
-          branch. This tab is reserved so MCP, Connectors, and future Skills
-          setup live in the same Integration route.
-        </p>
       </div>
     </section>
   );
