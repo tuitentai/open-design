@@ -73,10 +73,17 @@ jobs:
       - name: Trigger CI for metrics PR branch
         env:
           GH_TOKEN: ${{ github.token }}
-          METRICS_BRANCH: metrics-run-${{ github.run_id }}
+          METRICS_PR_TITLE: Auto-generated metrics for run #${{ github.run_id }}
         run: |
           set -euo pipefail
-          if gh api "repos/${{ github.repository }}/branches/$METRICS_BRANCH" >/dev/null 2>&1; then
+          METRICS_BRANCH="$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --state open \
+            --base main \
+            --json title,headRefName \
+            --jq 'map(select(.title == env.METRICS_PR_TITLE)) | .[0].headRefName // empty')"
+
+          if [ -n "$METRICS_BRANCH" ]; then
             gh workflow run ci.yml --repo "${{ github.repository }}" --ref "$METRICS_BRANCH"
           else
             echo "No metrics PR branch created; skipping CI dispatch"
