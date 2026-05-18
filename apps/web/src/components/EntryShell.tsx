@@ -31,6 +31,7 @@ import type {
   SkillSummary,
 } from '../types';
 import { apiProtocolLabel } from '../utils/apiProtocol';
+import { formatPickAndImportFailure } from '../utils/pickAndImportError';
 import { CenteredLoader } from './Loading';
 import { DesignsTab } from './DesignsTab';
 import { DesignSystemPreviewModal } from './DesignSystemPreviewModal';
@@ -105,28 +106,6 @@ function defaultPluginInputsForCreate(
     style,
     ...(aspect ? { aspect } : {}),
   };
-}
-
-function formatPickAndImportErrorDetails(details: unknown): string | undefined {
-  if (typeof details === 'string' && details.length > 0) return details;
-  if (details == null || typeof details !== 'object') return undefined;
-  const record = details as Record<string, unknown>;
-  const error = record.error;
-  if (error != null && typeof error === 'object') {
-    const errRecord = error as Record<string, unknown>;
-    const message = errRecord.message;
-    const nestedDetails = errRecord.details;
-    if (typeof message === 'string' && message.length > 0) {
-      if (nestedDetails != null && typeof nestedDetails === 'object') {
-        const nestedReason = (nestedDetails as Record<string, unknown>).reason;
-        if (typeof nestedReason === 'string' && nestedReason.length > 0) {
-          return `${message} (${nestedReason})`;
-        }
-      }
-      return message;
-    }
-  }
-  return undefined;
 }
 
 // Theme options exposed in the avatar-popover appearance submenu.
@@ -321,6 +300,7 @@ export function EntryShell({
     message: string;
     details?: string;
   } | null>(null);
+  const [chipImporting, setChipImporting] = useState(false);
   const [integrationTab, setIntegrationTab] = useState<IntegrationTab>(integrationInitialTab);
   const [homePromptHandoff, setHomePromptHandoff] = useState<HomePromptHandoff | null>(null);
   const avatarMenuRef = useRef<HTMLDivElement | null>(null);
@@ -443,6 +423,7 @@ export function EntryShell({
   // project. Browser-only shells fall back to the existing modal
   // path so the user can paste a baseDir.
   async function handleChipFolderImport() {
+    if (chipImporting) return;
     // PR #974 trust boundary: the renderer cannot pick a folder directly
     // anymore — the bridge exposes `pickAndImport` instead (atomic
     // pick + HMAC-gated import). On the web (no electronAPI) or when
@@ -453,22 +434,18 @@ export function EntryShell({
       typeof window.electronAPI?.pickAndImport === 'function' &&
       onImportFolderResponse
     ) {
-      const result = await window.electronAPI.pickAndImport();
-      if (!result || ('canceled' in result && result.canceled === true)) return;
-      if (result.ok === true) {
-        await onImportFolderResponse(result.response);
-        return;
+      setChipImporting(true);
+      try {
+        const result = await window.electronAPI.pickAndImport();
+        if (!result || ('canceled' in result && result.canceled === true)) return;
+        if (result.ok === true) {
+          await onImportFolderResponse(result.response);
+          return;
+        }
+        setFolderImportError(formatPickAndImportFailure(result));
+      } finally {
+        setChipImporting(false);
       }
-      const reason = 'reason' in result && typeof result.reason === 'string'
-        ? result.reason
-        : 'unknown failure';
-      const details = 'details' in result && result.details != null
-        ? formatPickAndImportErrorDetails(result.details)
-        : undefined;
-      setFolderImportError({
-        message: `Open folder failed: ${reason}`,
-        ...(details ? { details } : {}),
-      });
       return;
     }
     openNewProject('prototype');
