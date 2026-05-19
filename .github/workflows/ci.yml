@@ -58,7 +58,7 @@ jobs:
               if [[ "$file" == "apps/daemon/"* || "$file" == "packages/contracts/"* || "$file" == "packages/platform/"* || "$file" == "packages/sidecar/"* || "$file" == "packages/sidecar-proto/"* ]]; then
                 daemon_tests_required=true
               fi
-              if [[ "$file" == "apps/web/"* || "$file" == "packages/contracts/"* || "$file" == "packages/platform/"* || "$file" == "packages/sidecar/"* || "$file" == "packages/sidecar-proto/"* ]]; then
+              if [[ "$file" == "apps/web/"* || "$file" == "packages/contracts/"* || "$file" == "packages/host/"* || "$file" == "packages/platform/"* || "$file" == "packages/sidecar/"* || "$file" == "packages/sidecar-proto/"* ]]; then
                 web_tests_required=true
               fi
               if [[ "$file" == "scripts/"* || "$file" == "assets/"* || "$file" == "skills/"* || "$file" == "prompt-templates/"* || "$file" == "design-systems/"* || "$file" == "design-templates/"* || "$file" == "craft/"* ]]; then
@@ -68,7 +68,7 @@ jobs:
               if [[ "$file" == "tools/dev/"* || "$file" == "packages/platform/"* || "$file" == "packages/sidecar/"* || "$file" == "packages/sidecar-proto/"* ]]; then
                 tools_dev_tests_required=true
               fi
-              if [[ "$file" == "tools/pack/"* || "$file" == "apps/packaged/"* || "$file" == "apps/desktop/"* || "$file" == "packages/platform/"* || "$file" == "packages/sidecar/"* || "$file" == "packages/sidecar-proto/"* ]]; then
+              if [[ "$file" == "tools/pack/"* || "$file" == "apps/packaged/"* || "$file" == "apps/desktop/"* || "$file" == "packages/host/"* || "$file" == "packages/platform/"* || "$file" == "packages/sidecar/"* || "$file" == "packages/sidecar-proto/"* ]]; then
                 tools_pack_tests_required=true
               fi
               if [[ "$file" == "package.json" || "$file" == "pnpm-lock.yaml" || "$file" == "pnpm-workspace.yaml" || "$file" == ".github/workflows/ci.yml" ]]; then
@@ -222,6 +222,7 @@ jobs:
       - name: Core package tests
         run: |
           pnpm --filter @open-design/contracts test
+          pnpm --filter @open-design/host test
           pnpm --filter @open-design/platform test
           pnpm --filter @open-design/sidecar test
           pnpm --filter @open-design/sidecar-proto test
