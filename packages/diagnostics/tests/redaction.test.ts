@@ -65,6 +65,12 @@ describe("redactText", () => {
     expect(mixed).not.toContain("deadbeef0123");
     expect(mixed).toContain("[REDACTED]");
 
+    // RFC 6750 token68 includes `~`; the redactor must consume the whole
+    // token, not stop at the first `~` and leak the tail.
+    const tilde = redactText("Authorization: Bearer abcd~efgh");
+    expect(tilde).not.toContain("efgh");
+    expect(tilde).not.toContain("~");
+
     const lowerBasic = redactText("X-Custom: basic dXNlcjpwYXNz");
     expect(lowerBasic).not.toContain("dXNlcjpwYXNz");
     expect(lowerBasic).toContain("[REDACTED]");

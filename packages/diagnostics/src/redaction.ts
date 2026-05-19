@@ -14,7 +14,10 @@ const BARE_SECRET_RE = /(^|[\s,;])(access_token|refresh_token|id_token|api[_-]?k
 // credential as one unit. Case-insensitive: HTTP auth schemes are
 // case-insensitive per RFC 7235 §2.1, and we routinely see lowercase
 // `authorization: bearer …` in proxy / curl-style logs.
-const HTTP_AUTH_SCHEME_RE = /\b(Bearer|Token|Basic)\s+([A-Za-z0-9._\-+/=:]{4,})/gi;
+// Character class covers RFC 6750 token68 (ALPHA / DIGIT / "-" / "." / "_"
+// / "~" / "+" / "/" / "=") plus ":" for Basic credentials. Missing "~"
+// previously left tokens like `Bearer abcd~efgh` partially exposed.
+const HTTP_AUTH_SCHEME_RE = /\b(Bearer|Token|Basic)\s+([A-Za-z0-9._~\-+/=:]{4,})/gi;
 
 const REDACTED = "[REDACTED]";
 
