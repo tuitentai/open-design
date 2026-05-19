@@ -786,7 +786,7 @@ export const ja: Dict = {
   'fileViewer.presentFullscreen': 'フルスクリーン',
   'fileViewer.presentNewTab': '新しいタブ',
   'fileViewer.exitPresentation': 'プレゼンを終了',
-  'fileViewer.shareLabel': '共有',
+  'fileViewer.shareLabel': 'エクスポート',
   'fileViewer.exportPdf': 'PDFとしてエクスポート',
   'fileViewer.exportPdfAllSlides': 'PDFとしてエクスポート（全スライド）',
   'fileViewer.exportPptxBusy': '現在のターンが終わるまでお待ちください。',

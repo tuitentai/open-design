@@ -923,7 +923,7 @@ export const fa: Dict = {
   'fileViewer.presentFullscreen': 'تمام صفحه',
   'fileViewer.presentNewTab': 'تب جدید',
   'fileViewer.exitPresentation': 'خروج از ارائه',
-  'fileViewer.shareLabel': 'اشتراک‌گذاری',
+  'fileViewer.shareLabel': 'خروجی گرفتن',
   'fileViewer.exportPdf': 'صادرکردن به PDF',
   'fileViewer.exportPdfAllSlides': 'صادرکردن به PDF (همه اسلایدها)',
   'fileViewer.exportPptxBusy': 'منتظر پایان نوبت فعلی باشید.',

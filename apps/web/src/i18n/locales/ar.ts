@@ -899,7 +899,7 @@ export const ar: Dict = {
   'fileViewer.presentFullscreen': 'ملء الشاشة',
   'fileViewer.presentNewTab': 'علامة تبويب جديدة',
   'fileViewer.exitPresentation': 'الخروج من العرض',
-  'fileViewer.shareLabel': 'مشاركة',
+  'fileViewer.shareLabel': 'تصدير',
   'fileViewer.exportPdf': 'تصدير كـ PDF',
   'fileViewer.exportPdfAllSlides': 'تصدير كـ PDF (كل الشرائح)',
   'fileViewer.exportPptxBusy': 'انتظر انتهاء الدور الحالي.',

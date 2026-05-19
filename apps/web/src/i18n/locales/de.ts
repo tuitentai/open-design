@@ -787,7 +787,7 @@ export const de: Dict = {
   'fileViewer.presentFullscreen': 'Vollbild',
   'fileViewer.presentNewTab': 'Neuer Tab',
   'fileViewer.exitPresentation': 'Präsentation beenden',
-  'fileViewer.shareLabel': 'Teilen',
+  'fileViewer.shareLabel': 'Exportieren',
   'fileViewer.exportPdf': 'Als PDF exportieren',
   'fileViewer.exportPdfAllSlides': 'Als PDF exportieren (alle Slides)',
   'fileViewer.exportPptxBusy': 'Warten Sie, bis der aktuelle Turn abgeschlossen ist.',

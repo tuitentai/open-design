@@ -1368,7 +1368,7 @@ export const en: Dict = {
   'fileViewer.presentFullscreen': 'Fullscreen',
   'fileViewer.presentNewTab': 'New tab',
   'fileViewer.exitPresentation': 'Exit presentation',
-  'fileViewer.shareLabel': 'Share',
+  'fileViewer.shareLabel': 'Export',
   'fileViewer.exportPdf': 'Export as PDF',
   'fileViewer.exportPdfAllSlides': 'Export as PDF (all slides)',
   'fileViewer.exportPptxBusy': 'Wait for the current turn to finish.',

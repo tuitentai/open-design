@@ -899,7 +899,7 @@ export const fr: Dict = {
   'fileViewer.presentFullscreen': 'Plein écran',
   'fileViewer.presentNewTab': 'Nouvel onglet',
   'fileViewer.exitPresentation': 'Quitter la présentation',
-  'fileViewer.shareLabel': 'Partager',
+  'fileViewer.shareLabel': 'Exporter',
   'fileViewer.exportPdf': 'Exporter en PDF',
   'fileViewer.exportPdfAllSlides': 'Exporter en PDF (toutes les diapos)',
   'fileViewer.exportPptxBusy': 'Attendez la fin du tour en cours.',

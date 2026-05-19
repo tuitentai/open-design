@@ -922,7 +922,7 @@ export const ptBR: Dict = {
   'fileViewer.presentFullscreen': 'Tela cheia',
   'fileViewer.presentNewTab': 'Nova aba',
   'fileViewer.exitPresentation': 'Sair da apresentação',
-  'fileViewer.shareLabel': 'Compartilhar',
+  'fileViewer.shareLabel': 'Exportar',
   'fileViewer.exportPdf': 'Exportar como PDF',
   'fileViewer.exportPdfAllSlides': 'Exportar como PDF (todos os slides)',
   'fileViewer.exportPptxBusy': 'Aguarde o turno atual terminar.',

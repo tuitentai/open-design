@@ -941,7 +941,7 @@ export const uk: Dict = {
   'fileViewer.presentFullscreen': 'Повноекранний режим',
   'fileViewer.presentNewTab': 'Нова вкладка',
   'fileViewer.exitPresentation': 'Вийти з режиму презентації',
-  'fileViewer.shareLabel': 'Поділитися',
+  'fileViewer.shareLabel': 'Експортувати',
   'fileViewer.exportPdf': 'Експортувати як PDF',
   'fileViewer.exportPdfAllSlides': 'Експортувати як PDF (усі слайди)',
   'fileViewer.exportPptxBusy': 'Чекайте, поки поточна черга завершиться.',

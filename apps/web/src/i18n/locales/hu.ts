@@ -899,7 +899,7 @@ export const hu: Dict = {
   'fileViewer.presentFullscreen': 'Teljes képernyő',
   'fileViewer.presentNewTab': 'Új lap',
   'fileViewer.exitPresentation': 'Bemutató bezárása',
-  'fileViewer.shareLabel': 'Megosztás',
+  'fileViewer.shareLabel': 'Exportálás',
   'fileViewer.exportPdf': 'Exportálás PDF-ként',
   'fileViewer.exportPdfAllSlides': 'Exportálás PDF-ként (minden dia)',
   'fileViewer.exportPptxBusy': 'Várj, amíg az aktuális kör befejeződik.',

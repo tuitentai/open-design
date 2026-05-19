@@ -1358,7 +1358,7 @@ export const zhCN: Dict = {
   'fileViewer.presentFullscreen': '全屏',
   'fileViewer.presentNewTab': '新标签页',
   'fileViewer.exitPresentation': '退出演示',
-  'fileViewer.shareLabel': '分享',
+  'fileViewer.shareLabel': '导出',
   'fileViewer.exportPdf': '导出为 PDF',
   'fileViewer.exportPdfAllSlides': '导出为 PDF（全部幻灯片）',
   'fileViewer.exportPptxBusy': '请等待当前任务完成。',

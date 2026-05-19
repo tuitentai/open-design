@@ -788,7 +788,7 @@ export const esES: Dict = {
   'fileViewer.presentFullscreen': 'Pantalla completa',
   'fileViewer.presentNewTab': 'Pestaña nueva',
   'fileViewer.exitPresentation': 'Salir de la presentación',
-  'fileViewer.shareLabel': 'Compartir',
+  'fileViewer.shareLabel': 'Exportar',
   'fileViewer.exportPdf': 'Exportar como PDF',
   'fileViewer.exportPdfAllSlides': 'Exportar como PDF (todas las diapositivas)',
   'fileViewer.exportPptxBusy': 'Espera a que termine el turno actual.',

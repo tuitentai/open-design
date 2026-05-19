@@ -886,7 +886,7 @@ export const tr: Dict = {
   'fileViewer.presentFullscreen': 'Tam ekran',
   'fileViewer.presentNewTab': 'Yeni sekme',
   'fileViewer.exitPresentation': 'Sunumdan ayrıl',
-  'fileViewer.shareLabel': 'Paylaş',
+  'fileViewer.shareLabel': 'Dışa aktar',
   'fileViewer.exportPdf': 'PDF olarak dışa aktar',
   'fileViewer.exportPdfAllSlides': 'PDF olarak dışa aktar (tüm slaytlar)',
   'fileViewer.exportPptxBusy': 'Güncel sıranın bitmesini bekleyin.',

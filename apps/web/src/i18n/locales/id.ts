@@ -1019,7 +1019,7 @@ export const id: Dict = {
   'fileViewer.presentFullscreen': 'Presentasi layar penuh',
   'fileViewer.presentNewTab': 'Presentasi di tab baru',
   'fileViewer.exitPresentation': 'Keluar presentasi',
-  'fileViewer.shareLabel': 'Bagikan',
+  'fileViewer.shareLabel': 'Ekspor',
   'fileViewer.exportPdf': 'Ekspor PDF',
   'fileViewer.exportPdfAllSlides': 'Ekspor PDF semua slide',
   'fileViewer.exportPptxBusy': 'Mengekspor PPTX...',

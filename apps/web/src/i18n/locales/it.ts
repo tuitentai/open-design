@@ -810,7 +810,7 @@ export const it: Dict = {
   'fileViewer.presentFullscreen': 'Schermo intero',
   'fileViewer.presentNewTab': 'Nuova scheda',
   'fileViewer.exitPresentation': 'Esci dalla presentazione',
-  'fileViewer.shareLabel': 'Condividi',
+  'fileViewer.shareLabel': 'Esporta',
   'fileViewer.exportPdf': 'Esporta in PDF',
   'fileViewer.exportPdfAllSlides': 'Esporta in PDF (tutte le diapositive)',
   'fileViewer.exportPptxBusy': 'Attendi la fine del turno in corso.',

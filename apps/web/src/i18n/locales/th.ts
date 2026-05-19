@@ -828,7 +828,7 @@ export const th: Dict = {
   'fileViewer.presentFullscreen': 'ยืดให้เต็มที่หน้าจอ',
   'fileViewer.presentNewTab': 'เข้าสู่ลิ้งก์หน้าใหม่',
   'fileViewer.exitPresentation': 'หนีออกโหมดคนโชว์',
-  'fileViewer.shareLabel': 'แชร์',
+  'fileViewer.shareLabel': 'ส่งออก',
   'fileViewer.exportPdf': 'เปลี่ยนฟอร์แมตเอาไปเป็น PDF',
   'fileViewer.exportPdfAllSlides': 'ดาวน์โหลดทั้งหน้าเป็น PDF',
   'fileViewer.exportPptxBusy': 'ต้องให้ทำระบบของปัจจุบันจนสำเร็จก่อน',

@@ -922,7 +922,7 @@ export const ru: Dict = {
   'fileViewer.presentFullscreen': 'Полноэкранный',
   'fileViewer.presentNewTab': 'Новая вкладка',
   'fileViewer.exitPresentation': 'Выйти из презентации',
-  'fileViewer.shareLabel': 'Поделиться',
+  'fileViewer.shareLabel': 'Экспорт',
   'fileViewer.exportPdf': 'Экспорт в PDF',
   'fileViewer.exportPdfAllSlides': 'Экспорт в PDF (все слайды)',
   'fileViewer.exportPptxBusy': 'Дождитесь окончания текущего хода.',

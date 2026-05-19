@@ -974,7 +974,7 @@ export const zhTW: Dict = {
   'fileViewer.presentFullscreen': '全螢幕',
   'fileViewer.presentNewTab': '新分頁',
   'fileViewer.exitPresentation': '離開簡報',
-  'fileViewer.shareLabel': '分享',
+  'fileViewer.shareLabel': '匯出',
   'fileViewer.exportPdf': '匯出為 PDF',
   'fileViewer.exportPdfAllSlides': '匯出為 PDF（全部投影片）',
   'fileViewer.exportPptxBusy': '請等待當前任務完成。',

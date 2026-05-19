@@ -899,7 +899,7 @@ export const ko: Dict = {
   'fileViewer.presentFullscreen': '전체 화면',
   'fileViewer.presentNewTab': '새 탭에서',
   'fileViewer.exitPresentation': '프레젠테이션 종료',
-  'fileViewer.shareLabel': '공유',
+  'fileViewer.shareLabel': '내보내기',
   'fileViewer.exportPdf': 'PDF로 내보내기',
   'fileViewer.exportPdfAllSlides': 'PDF로 내보내기 (모든 슬라이드)',
   'fileViewer.exportPptxBusy': '현재 작업이 끝날 때까지 기다려 주세요.',
