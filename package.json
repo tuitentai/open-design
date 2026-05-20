@@ -30,6 +30,7 @@
     "@open-design/tools-pr": "workspace:*",
     "@open-design/tools-serve": "workspace:*",
     "@types/node": "20.19.39",
+    "next": "16.2.6",
     "tsx": "4.22.2",
     "typescript": "5.9.3"
   },
